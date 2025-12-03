@@ -10,7 +10,8 @@ class IndicatorAgentState(TypedDict):
         dict, "OHLCV dictionary used for computing technical indicators"
     ]
     time_frame: Annotated[str, "time period for k line data provided"]
-    stock_name: Annotated[dict, "stock name for prompt"]
+    stock_name: Annotated[str, "stock name for prompt"]  # Changed from dict to str
+    # stock_name: Annotated[dict, "stock name for prompt"]
 
     # Indicator Agent Tools output values (explicitly added per indicator)
     rsi: Annotated[List[float], "Relative Strength Index values"]

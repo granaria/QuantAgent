@@ -47,16 +47,15 @@ class WebTradingAnalyzer:
     def __init__(self):
 
         load_dotenv()
-        self.yfclient = YahooFinanceClient()
+
+        # In WebTradingAnalyzer.__init__
+        self.yfclient = YahooFinanceClient(polygon_api_key=os.environ.get('POLYGON_API_KEY'))  # Add fallback key
+        # self.yfclient = YahooFinanceClient()
         # ------------------------------------------------------------------
 
         logger.setLevel(logging.DEBUG)  # add this line
 
         print('def __init__(self):')
-
-
-
-
 
         """Initialize the web trading analyzer."""
         from default_config import DEFAULT_CONFIG
@@ -77,67 +76,7 @@ class WebTradingAnalyzer:
         self.custom_assets_file = self.data_dir / "custom_assets.json"
         self.custom_assets = self.load_custom_assets()
 
-    def fetch_yfinance_data(
-        self, symbol: str, interval: str, start_date: str, end_date: str
-    ) -> pd.DataFrame:
-        """Fetch OHLCV data from Yahoo Finance."""
-        try:
-            yf_symbol = self.yfinance_symbols.get(symbol, symbol)
-            yf_interval = self.yfinance_intervals.get(interval, interval)
 
-            df = yf.download(
-                tickers=yf_symbol, start=start_date, end=end_date, interval=yf_interval
-            )
-
-            if df is None or df.empty:
-                return pd.DataFrame()
-
-            # Ensure df is a DataFrame, not a Series
-            if isinstance(df, pd.Series):
-                df = df.to_frame()
-
-            # Reset index to ensure we have a clean DataFrame
-            df = df.reset_index()
-
-            # Ensure we have a DataFrame
-            if not isinstance(df, pd.DataFrame):
-                return pd.DataFrame()
-
-            # Handle potential MultiIndex columns
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
-
-            # Rename columns if needed
-            column_mapping = {
-                "Date": "Datetime",
-                "Open": "Open",
-                "High": "High",
-                "Low": "Low",
-                "Close": "Close",
-                "Volume": "Volume",
-            }
-
-            # Only rename columns that exist
-            existing_columns = {
-                old: new for old, new in column_mapping.items() if old in df.columns
-            }
-            df = df.rename(columns=existing_columns)
-
-            # Ensure we have the required columns
-            required_columns = ["Datetime", "Open", "High", "Low", "Close"]
-            if not all(col in df.columns for col in required_columns):
-                print(f"Warning: Missing columns. Available: {list(df.columns)}")
-                return pd.DataFrame()
-
-            # Select only the required columns
-            df = df[required_columns]
-            df["Datetime"] = pd.to_datetime(df["Datetime"])
-
-            return df
-
-        except Exception as e:
-            print(f"Error fetching data for {symbol}: {e}")
-            return pd.DataFrame()
 
     def fetch_yfinance_data_with_datetime(
         self,

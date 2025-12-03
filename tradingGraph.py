@@ -15,6 +15,7 @@ from langgraph.prebuilt import ToolNode
 from default_config import DEFAULT_CONFIG
 from graph_setup import SetGraph
 from graph_util import TechnicalTools
+from yahoofinanceClient import YahooFinanceClient
 
 
 class TradingGraph:
@@ -24,6 +25,7 @@ class TradingGraph:
     """
 
     def __init__(self, config=None):
+        self.yf_client = YahooFinanceClient()  # Or inject via config
         # --- Configuration and LLMs ---
         self.config = config if config is not None else DEFAULT_CONFIG.copy()
 
@@ -198,6 +200,17 @@ class TradingGraph:
     #         ),
     #         "trend": ToolNode([self.toolkit.generate_trend_image]),
     #     }
+
+    def run_live_analysis(self, symbol: str, interval: str = "1h", lookback_days: int = 30):
+        kline_df = self.yf_client.fetch_data(symbol, interval, lookback_days)
+        kline_data = kline_df.to_dict('records')
+        state = {
+            "kline_data": kline_data,
+            "time_frame": interval,
+            "stock_name": {"name": symbol},
+            "messages": []
+        }
+        return self.graph.invoke(state)
 
     def refresh_llms(self):
         """
